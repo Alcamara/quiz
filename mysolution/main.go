@@ -8,6 +8,26 @@ import (
 	"strconv"
 )
 
+type MathProblem struct {
+	question string
+	Answer   int
+}
+
+func ParseLines(lines [][]string) []MathProblem {
+	problems := make([]MathProblem, 0)
+	for _, line := range lines {
+		a, _ := strconv.Atoi(line[1])
+		p := MathProblem{
+			question: line[0],
+			Answer:   a,
+		}
+
+		problems = append(problems, p)
+	}
+
+	return problems
+}
+
 func main() {
 
 	problemsFile, err := os.Open("problems.csv")
@@ -17,28 +37,24 @@ func main() {
 
 	defer problemsFile.Close()
 
-	problems := csv.NewReader(problemsFile)
+	problemsReader := csv.NewReader(problemsFile)
+
+	lines, err := problemsReader.ReadAll()
+	if err != nil {
+		log.Fatal("error")
+	}
+
+	problems := ParseLines(lines)
 
 	correctAns := 0
 
-	numProblems := 12
-
-	fmt.Println(numProblems)
-
-	for i := 0; i < numProblems; i++ {
-		problem, err := problems.Read()
-
-		if err != nil {
-			log.Fatal("error", err)
-		}
-
-		ans, _ := strconv.Atoi(problem[1])
+	for _, problem := range problems {
 		var userInput int
 
-		fmt.Printf("%v = ", problem[0])
+		fmt.Printf("%v = ", problem.question)
 		fmt.Scanln(&userInput)
 
-		if userInput == ans {
+		if userInput == problem.Answer {
 			correctAns++
 		}
 

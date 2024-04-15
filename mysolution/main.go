@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"flag"
+	"time"
 )
 
 type MathProblem struct {
@@ -28,9 +31,22 @@ func ParseLines(lines [][]string) []MathProblem {
 	return problems
 }
 
+func StartTimer(duration *int, c chan bool) {
+	timer := time.NewTimer(5 * time.Second)
+	<-timer.C
+	isTimerStopped := timer.Stop()
+	if isTimerStopped {
+		c <- true
+	}
+}
+
 func main() {
 
-	problemsFile, err := os.Open("problems.csv")
+	csvFileName := flag.String("csv", "problems.csv", "a csv file in the format of 'question, answer'")
+	timerDuration := flag.Int("limit", 30, "the time for the quiz in seconds")
+	flag.Parse()
+
+	problemsFile, err := os.Open(*csvFileName)
 	if err != nil {
 		log.Fatal("Error occurred while opening csv file")
 	}
@@ -44,14 +60,23 @@ func main() {
 		log.Fatal("error")
 	}
 
+	fmt.Println(lines)
+
 	problems := ParseLines(lines)
 
 	correctAns := 0
+
+	timerChan := make(chan bool)
 
 	for _, problem := range problems {
 		var userInput int
 
 		fmt.Printf("%v = ", problem.question)
+		go StartTimer(timerDuration, timerChan)
+		if <-timerChan {
+			fmt.Scan
+			break
+		}
 		fmt.Scanln(&userInput)
 
 		if userInput == problem.Answer {
@@ -60,6 +85,6 @@ func main() {
 
 	}
 
-	fmt.Printf("You got %v correct", correctAns)
+	fmt.Printf("You got %v correct out of 12", correctAns)
 
 }
